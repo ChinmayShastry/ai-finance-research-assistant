@@ -1,29 +1,46 @@
 import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
+from yfinance.exceptions import YFRateLimitError
 
+def get_stock_data(ticker: str, period_days: int = 90):
 
-def get_stock_data(ticker: str, period_days: int = 90) -> pd.DataFrame:
-    """Fetch historical stock data from Yahoo Finance."""
     end_date = datetime.now()
     start_date = end_date - timedelta(days=period_days)
 
-    stock = yf.Ticker(ticker)
-    df = stock.history(start=start_date.strftime("%Y-%m-%d"), end=end_date.strftime("%Y-%m-%d"))
+    try:
 
-    if df.empty:
+        stock = yf.Ticker(ticker)
+
+        df = stock.history(
+            start=start_date.strftime("%Y-%m-%d"),
+            end=end_date.strftime("%Y-%m-%d")
+        )
+
+        if df.empty:
+            return pd.DataFrame()
+
+        df = df.reset_index()
+
+        if "Date" in df.columns:
+            df["Date"] = pd.to_datetime(df["Date"]).dt.date
+
+        return df
+
+    except YFRateLimitError:
+        print(f"Yahoo Rate Limited: {ticker}")
         return pd.DataFrame()
 
-    df = df.reset_index()
-    df["Date"] = pd.to_datetime(df["Date"]).dt.date
-    return df
-
+    except Exception as e:
+        print(f"Yahoo Error ({ticker}): {e}")
+        return pd.DataFrame()
 
 def get_stock_info(ticker: str) -> dict:
-    """Fetch basic stock info (name, sector, market cap, etc.)."""
     stock = yf.Ticker(ticker)
+
     try:
         info = stock.info
+
         return {
             "name": info.get("longName", "N/A"),
             "sector": info.get("sector", "N/A"),
@@ -32,12 +49,32 @@ def get_stock_info(ticker: str) -> dict:
             "pe_ratio": info.get("trailingPE", "N/A"),
             "52w_high": info.get("fiftyTwoWeekHigh", "N/A"),
             "52w_low": info.get("fiftyTwoWeekLow", "N/A"),
-            "current_price": info.get("currentPrice", info.get("regularMarketPrice", "N/A")),
+            "current_price": info.get(
+                "currentPrice",
+                info.get("regularMarketPrice", "N/A")
+            ),
             "currency": info.get("currency", "INR"),
         }
+
+    except YFRateLimitError:
+
+        print(f"Yahoo Info Rate Limited: {ticker}")
+
+        return {
+            "name": ticker.replace(".NS", ""),
+            "sector": "N/A",
+            "industry": "N/A",
+            "market_cap": 0,
+            "pe_ratio": "N/A",
+            "52w_high": "N/A",
+            "52w_low": "N/A",
+            "current_price": "N/A",
+            "currency": "INR",
+        }
+
     except Exception:
         return {}
-
+    
 
 def get_commodity_data(ticker: str, period_days: int = 90) -> pd.DataFrame:
     """Fetch historical commodity data."""
@@ -62,7 +99,10 @@ def calculate_price_changes(df: pd.DataFrame) -> dict:
     current_price = df["Close"].iloc[-1]
     changes = {}
 
-    periods = {"5D": 5, "15D": 15, "30D": 30, "3M": 90}
+    periods = {
+    "7D": 7,
+    "30D": 30,
+    "90D": 90,}
     for label, days in periods.items():
         if len(df) >= days:
             past_price = df["Close"].iloc[-days]
@@ -79,10 +119,11 @@ def calculate_price_changes(df: pd.DataFrame) -> dict:
     return changes
 
 
+
 def get_price_summary(ticker: str, is_commodity: bool = False) -> dict:
     """Get a complete price summary for a ticker."""
     df = get_stock_data(ticker, period_days=100)
-    if df.empty:
+    if df is None or df.empty:
         return {"error": "No data available"}
 
     price_changes = calculate_price_changes(df)
