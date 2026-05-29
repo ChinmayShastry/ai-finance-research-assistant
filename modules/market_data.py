@@ -212,26 +212,34 @@ def get_price_summary(ticker: str, is_commodity: bool = False) -> dict:
 
     # Commodity USD -> INR Conversion
     if is_commodity:
-
+    
         usd_inr = get_usd_inr_rate()
-
+    
         try:
-
+    
             for col in ["Open", "High", "Low", "Close"]:
-
+    
                 if col in df.columns:
                     df[col] = df[col] * usd_inr
-
+    
+            # Convert 52W High & Low to INR
+            for key in ["52w_high", "52w_low"]:
+    
+                value = info.get(key)
+    
+                if isinstance(value, (int, float)):
+                    info[key] = round(value * usd_inr, 2)
+    
             # Force current price from converted dataframe
             if not df.empty:
-
+    
                 info["current_price"] = round(
                     float(df["Close"].dropna().iloc[-1]),
                     2
                 )
-
+    
         except Exception as e:
-
+    
             print(f"Commodity Conversion Error: {e}")
 
     price_changes = calculate_price_changes(df)
