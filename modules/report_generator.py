@@ -137,6 +137,7 @@ def _call_openai(prompt: str) -> str:
             ],
             temperature=0.3,
             max_tokens=800,
+            timeout=60
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
