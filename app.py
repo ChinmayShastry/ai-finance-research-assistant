@@ -100,17 +100,78 @@ if analyze_button and selected_asset:
     price_changes = price_data.get("price_changes", {})
     info = price_data.get("info", {})
 
+    
     if info:
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Current Price", f"₹{info.get('current_price', 'N/A')}")
-        with col2:
-            sector = info.get("sector", "N/A")
-            st.metric("Sector", sector if sector else "N/A")    
-        with col3:
-            st.metric("Market Cap", format_market_cap(info.get("market_cap", 0)))
-        with col4:
-            st.metric("P/E Ratio", f"{info.get('pe_ratio', 'N/A')}")
+
+        if is_commodity:
+    
+            col1, col2, col3, col4 = st.columns(4)
+    
+            with col1:
+                st.metric(
+                    "Current Price",
+                    f"₹{info.get('current_price', 'N/A')}"
+                )
+    
+            with col2:
+                st.metric(
+                    "USD/INR Rate",
+                    round(price_data.get("usd_inr_rate", 0), 2)
+                    if price_data.get("usd_inr_rate")
+                    else "N/A"
+                )
+    
+            with col3:
+                st.metric(
+                    "52W High",
+                    f"₹{info.get('52w_high', 'N/A')}"
+                )
+    
+            with col4:
+                st.metric(
+                    "52W Low",
+                    f"₹{info.get('52w_low', 'N/A')}"
+                )
+    
+            st.caption(
+                "Commodity prices are approximate INR conversions based on the current USD/INR exchange rate."
+            )
+    
+        else:
+    
+            col1, col2, col3, col4 = st.columns(4)
+    
+            with col1:
+                st.metric(
+                    "Current Price",
+                    f"₹{info.get('current_price', 'N/A')}"
+                )
+    
+            with col2:
+                sector = info.get("sector") or "N/A"
+    
+                st.metric(
+                    "Sector",
+                    sector
+                )
+    
+            with col3:
+                market_cap = info.get("market_cap", 0)
+    
+                st.metric(
+                    "Market Cap",
+                    format_market_cap(market_cap)
+                    if market_cap
+                    else "N/A"
+                )
+    
+            with col4:
+                pe_ratio = info.get("pe_ratio")
+    
+                st.metric(
+                    "P/E Ratio",
+                    pe_ratio if pe_ratio not in [None, "", "N/A"] else "N/A"
+                )
 
     if price_changes:
         cols = st.columns(4)
@@ -156,9 +217,9 @@ if analyze_button and selected_asset:
         progress_bar.progress((i + 1) / len(SENTIMENT_PERIODS))
 
     progress_bar.empty()
-
+    
     for period, sentiment in period_sentiments.items():
-        with st.expander(f"📅 {period}", expanded=(period == "5 Days")):
+        with st.expander(f"📅 {period}", expanded=(period == "7 Days")):
             st.write(sentiment)
 
     st.divider()
