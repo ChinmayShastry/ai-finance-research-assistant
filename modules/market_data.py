@@ -29,6 +29,8 @@ def get_stock_data(ticker: str, period_days: int = 90):
         if "Date" in df.columns:
             df["Date"] = pd.to_datetime(df["Date"]).dt.date
 
+        print(f"\nTicker: {ticker}")
+        print(df[["Date", "Close"]].tail())
         return df
 
     except YFRateLimitError:
@@ -91,9 +93,9 @@ def get_stock_info(ticker: str) -> dict:
                 or "N/A",
 
             "current_price":
-                info.get("currentPrice")
+                fast.get("lastPrice")
+                or info.get("currentPrice")
                 or info.get("regularMarketPrice")
-                or fast.get("lastPrice")
                 or "N/A",
 
             "currency":
@@ -220,13 +222,21 @@ def get_price_summary(ticker: str, is_commodity: bool = False) -> dict:
                 if col in df.columns:
                     df[col] = df[col] * usd_inr
 
+            # Force current price from converted dataframe
+            if not df.empty:
+
+                info["current_price"] = round(
+                    float(df["Close"].dropna().iloc[-1]),
+                    2
+                )
+
         except Exception as e:
 
             print(f"Commodity Conversion Error: {e}")
 
     price_changes = calculate_price_changes(df)
 
-    # Fallback current price from dataframe
+    # Stock fallback current price
     try:
 
         if (
