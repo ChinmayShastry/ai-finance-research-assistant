@@ -10,5 +10,3 @@ COMMODITIES = {
     "Cotton": "CT=F",
     "Mentha Oil": "MENTHOIL.NS",
 }
-
-INR_CONVERSION_TICKER = "USDINR=X"
