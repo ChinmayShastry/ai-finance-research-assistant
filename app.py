@@ -134,9 +134,8 @@ if analyze_button and selected_asset:
                 )
     
             st.caption(
-                "Commodity prices are approximate INR conversions based on the current USD/INR exchange rate."
+                "Commodity prices represent global futures contracts converted to INR using the current USD/INR exchange rate. These are not MCX or Indian spot market prices."
             )
-    
         else:
     
             col1, col2, col3, col4 = st.columns(4)
