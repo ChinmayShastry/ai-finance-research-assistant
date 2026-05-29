@@ -1,8 +1,8 @@
 streamlit
-openai
+openai>=1.0
 yfinance
-python-dotenv
-requests
-feedparser
 pandas
 plotly
+requests
+feedparser
+python-dotenv
