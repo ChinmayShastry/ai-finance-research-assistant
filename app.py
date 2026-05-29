@@ -105,7 +105,8 @@ if analyze_button and selected_asset:
         with col1:
             st.metric("Current Price", f"₹{info.get('current_price', 'N/A')}")
         with col2:
-            st.metric("Sector", info.get("sector", "N/A"))
+            sector = info.get("sector", "N/A")
+            st.metric("Sector", sector if sector else "N/A")    
         with col3:
             st.metric("Market Cap", format_market_cap(info.get("market_cap", 0)))
         with col4:
