@@ -15,6 +15,13 @@ from modules.sentiment_analyzer import analyze_sentiment_for_period, generate_se
 from modules.report_generator import generate_long_term_report, generate_upcoming_factors_report
 from modules.utils import format_market_cap, create_price_chart, create_volume_chart, color_change
 
+@st.cache_data(ttl=900)
+def cached_price_summary(ticker, is_commodity):
+    return get_price_summary(ticker, is_commodity)
+
+@st.cache_data(ttl=3600)
+def cached_news(asset):
+    return get_news_for_asset(asset, days=90)
 
 # --- Page Config ---
 st.set_page_config(
@@ -82,7 +89,7 @@ if analyze_button and selected_asset:
 
     # --- Price Data ---
     with st.spinner("Fetching market data..."):
-        price_data = get_price_summary(selected_ticker, is_commodity=is_commodity)
+        price_data = cached_price_summary(selected_ticker, is_commodity=is_commodity)
 
     if "error" in price_data:
         st.error(f"Could not fetch data for {selected_asset}. Please try again.")
@@ -127,7 +134,7 @@ if analyze_button and selected_asset:
 
     # --- News Fetching ---
     with st.spinner("Fetching news articles..."):
-        all_articles = get_news_for_asset(selected_asset, days=90)
+        all_articles = cached_news(selected_asset)
 
     st.markdown(f"*Found {len(all_articles)} news articles*")
 
