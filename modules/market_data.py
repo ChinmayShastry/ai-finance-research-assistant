@@ -24,16 +24,20 @@ def get_stock_data(ticker: str, period_days: int = 90):
 
         df = df.reset_index()
 
+        df = df.dropna(subset=["Close"])
+
         if "Date" in df.columns:
             df["Date"] = pd.to_datetime(df["Date"]).dt.date
 
         return df
 
     except YFRateLimitError:
+
         print(f"Yahoo Rate Limited: {ticker}")
         return pd.DataFrame()
 
     except Exception as e:
+
         print(f"Yahoo Error ({ticker}): {e}")
         return pd.DataFrame()
 
@@ -131,7 +135,7 @@ def get_stock_info(ticker: str) -> dict:
         }
 
 
-def get_commodity_data(ticker: str, period_days: int = 90) -> pd.DataFrame:
+def get_commodity_data(ticker: str, period_days: int = 90):
     return get_stock_data(ticker, period_days)
 
 
@@ -147,6 +151,7 @@ def get_usd_inr_rate() -> float:
                 or fx.info.get("regularMarketPrice")
                 or 83.0
             )
+
         except Exception:
             return 83.0
 
@@ -159,7 +164,12 @@ def calculate_price_changes(df: pd.DataFrame) -> dict:
     if df.empty or len(df) < 2:
         return {}
 
-    current_price = df["Close"].iloc[-1]
+    df = df.dropna(subset=["Close"])
+
+    if df.empty:
+        return {}
+
+    current_price = float(df["Close"].iloc[-1])
 
     changes = {}
 
@@ -172,9 +182,9 @@ def calculate_price_changes(df: pd.DataFrame) -> dict:
     for label, days in periods.items():
 
         if len(df) >= days:
-            past_price = df["Close"].iloc[-days]
+            past_price = float(df["Close"].iloc[-days])
         else:
-            past_price = df["Close"].iloc[0]
+            past_price = float(df["Close"].iloc[0])
 
         change_pct = ((current_price - past_price) / past_price) * 100
 
@@ -194,14 +204,43 @@ def get_price_summary(ticker: str, is_commodity: bool = False) -> dict:
     if df.empty:
         return {"error": "No data available"}
 
-    price_changes = calculate_price_changes(df)
-
-    info = get_stock_info(ticker) if not is_commodity else {}
+    info = get_stock_info(ticker)
 
     usd_inr = None
 
-    if is_commodity and info.get("currency") == "USD":
+    # Commodity USD -> INR Conversion
+    if is_commodity:
+
         usd_inr = get_usd_inr_rate()
+
+        try:
+
+            for col in ["Open", "High", "Low", "Close"]:
+
+                if col in df.columns:
+                    df[col] = df[col] * usd_inr
+
+        except Exception as e:
+
+            print(f"Commodity Conversion Error: {e}")
+
+    price_changes = calculate_price_changes(df)
+
+    # Fallback current price from dataframe
+    try:
+
+        if (
+            info.get("current_price") in [None, "N/A"]
+            and not df.empty
+        ):
+
+            info["current_price"] = round(
+                float(df["Close"].dropna().iloc[-1]),
+                2
+            )
+
+    except Exception:
+        pass
 
     return {
         "info": info,
