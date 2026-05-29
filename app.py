@@ -1,216 +1,222 @@
-import sys
-import os
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
 import streamlit as st
-import pandas as pd
 
-from config import OPENAI_API_KEY, NEWS_API_KEY, SENTIMENT_PERIODS
-from data.nifty250 import NIFTY_250_STOCKS, STOCK_SECTORS
-from data.commodities import COMMODITIES
-from modules.market_data import get_price_summary, get_usd_inr_rate
-from modules.news_fetcher import get_news_for_asset, filter_news_by_period
-from modules.sentiment_analyzer import analyze_sentiment_for_period, generate_sentiment_report
-from modules.report_generator import generate_long_term_report, generate_upcoming_factors_report
-from modules.utils import format_market_cap, create_price_chart, create_volume_chart, color_change
+st.title("Test App")
 
-@st.cache_data(ttl=900)
-def cached_price_summary(ticker, is_commodity):
-    return get_price_summary(ticker, is_commodity)
+st.success("App started successfully")
 
-@st.cache_data(ttl=3600)
-def cached_news(asset):
-    return get_news_for_asset(asset, days=90)
+# import sys
+# import os
 
-# --- Page Config ---
-st.set_page_config(
-    page_title="AI Financial Research Assistant",
-    page_icon="📊",
-    layout="wide",
-)
+# sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# --- Header ---
-st.title("📊 AI Financial Research Assistant")
-st.caption("Indian Markets | Nifty 250 Stocks & Major Commodities | Powered by OpenAI")
-st.divider()
+# import streamlit as st
+# import pandas as pd
 
-# --- Sidebar ---
-with st.sidebar:
-    st.header("⚙️ Configuration")
+# from config import OPENAI_API_KEY, NEWS_API_KEY, SENTIMENT_PERIODS
+# from data.nifty250 import NIFTY_250_STOCKS, STOCK_SECTORS
+# from data.commodities import COMMODITIES
+# from modules.market_data import get_price_summary, get_usd_inr_rate
+# from modules.news_fetcher import get_news_for_asset, filter_news_by_period
+# from modules.sentiment_analyzer import analyze_sentiment_for_period, generate_sentiment_report
+# from modules.report_generator import generate_long_term_report, generate_upcoming_factors_report
+# from modules.utils import format_market_cap, create_price_chart, create_volume_chart, color_change
 
-    api_status = "✅" if OPENAI_API_KEY else "❌"
-    news_status = "✅" if NEWS_API_KEY else "⚠️ (Google News RSS only)"
-    st.markdown(f"OpenAI API: {api_status}")
-    st.markdown(f"NewsAPI: {news_status}")
+# @st.cache_data(ttl=900)
+# def cached_price_summary(ticker, is_commodity):
+#     return get_price_summary(ticker, is_commodity)
 
-    st.divider()
-    st.header("🔍 Select Asset")
+# @st.cache_data(ttl=3600)
+# def cached_news(asset):
+#     return get_news_for_asset(asset, days=90)
 
-    asset_type = st.radio("Asset Type", ["Stocks", "Commodities"])
+# # --- Page Config ---
+# st.set_page_config(
+#     page_title="AI Financial Research Assistant",
+#     page_icon="📊",
+#     layout="wide",
+# )
 
-    if asset_type == "Stocks":
-        sector_filter = st.selectbox(
-            "Filter by Sector (optional)",
-            ["All Sectors"] + list(STOCK_SECTORS.keys()),
-        )
+# # --- Header ---
+# st.title("📊 AI Financial Research Assistant")
+# st.caption("Indian Markets | Nifty 250 Stocks & Major Commodities | Powered by OpenAI")
+# st.divider()
 
-        if sector_filter == "All Sectors":
-            stock_options = sorted(NIFTY_250_STOCKS.keys())
-        else:
-            stock_options = sorted(STOCK_SECTORS.get(sector_filter, []))
+# # --- Sidebar ---
+# with st.sidebar:
+#     st.header("⚙️ Configuration")
 
-        selected_asset = st.selectbox(
-            "Select Stock",
-            stock_options,
-            index=0,
-        )
-        selected_ticker = NIFTY_250_STOCKS.get(selected_asset, "")
-        is_commodity = False
-    else:
-        selected_asset = st.selectbox(
-            "Select Commodity",
-            sorted(COMMODITIES.keys()),
-        )
-        selected_ticker = COMMODITIES.get(selected_asset, "")
-        is_commodity = True
+#     api_status = "✅" if OPENAI_API_KEY else "❌"
+#     news_status = "✅" if NEWS_API_KEY else "⚠️ (Google News RSS only)"
+#     st.markdown(f"OpenAI API: {api_status}")
+#     st.markdown(f"NewsAPI: {news_status}")
 
-    st.divider()
-    analyze_button = st.button("🚀 Generate Analysis", type="primary", use_container_width=True)
+#     st.divider()
+#     st.header("🔍 Select Asset")
 
-# --- Main Content ---
-if not OPENAI_API_KEY:
-    st.error("⚠️ OpenAI API key not found. Please add it to your .env file.")
-    st.code("OPENAI_API_KEY=your_key_here", language="bash")
-    st.stop()
+#     asset_type = st.radio("Asset Type", ["Stocks", "Commodities"])
 
-if analyze_button and selected_asset:
-    st.subheader(f"Analysis: {selected_asset}")
+#     if asset_type == "Stocks":
+#         sector_filter = st.selectbox(
+#             "Filter by Sector (optional)",
+#             ["All Sectors"] + list(STOCK_SECTORS.keys()),
+#         )
 
-    # --- Price Data ---
-    with st.spinner("Fetching market data..."):
-        price_data = cached_price_summary(selected_ticker, is_commodity=is_commodity)
+#         if sector_filter == "All Sectors":
+#             stock_options = sorted(NIFTY_250_STOCKS.keys())
+#         else:
+#             stock_options = sorted(STOCK_SECTORS.get(sector_filter, []))
 
-    if "error" in price_data:
-        st.error(f"Could not fetch data for {selected_asset}. Please try again.")
-        st.stop()
+#         selected_asset = st.selectbox(
+#             "Select Stock",
+#             stock_options,
+#             index=0,
+#         )
+#         selected_ticker = NIFTY_250_STOCKS.get(selected_asset, "")
+#         is_commodity = False
+#     else:
+#         selected_asset = st.selectbox(
+#             "Select Commodity",
+#             sorted(COMMODITIES.keys()),
+#         )
+#         selected_ticker = COMMODITIES.get(selected_asset, "")
+#         is_commodity = True
 
-    # --- Display Price Metrics ---
-    st.markdown("### 📈 Price Overview")
-    price_changes = price_data.get("price_changes", {})
-    info = price_data.get("info", {})
+#     st.divider()
+#     analyze_button = st.button("🚀 Generate Analysis", type="primary", use_container_width=True)
 
-    if info:
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Current Price", f"₹{info.get('current_price', 'N/A')}")
-        with col2:
-            st.metric("Sector", info.get("sector", "N/A"))
-        with col3:
-            st.metric("Market Cap", format_market_cap(info.get("market_cap", 0)))
-        with col4:
-            st.metric("P/E Ratio", f"{info.get('pe_ratio', 'N/A')}")
+# # --- Main Content ---
+# if not OPENAI_API_KEY:
+#     st.error("⚠️ OpenAI API key not found. Please add it to your .env file.")
+#     st.code("OPENAI_API_KEY=your_key_here", language="bash")
+#     st.stop()
 
-    if price_changes:
-        cols = st.columns(4)
-        for i, (period, data) in enumerate(price_changes.items()):
-            with cols[i]:
-                st.metric(
-                    f"{period} Change",
-                    f"₹{data['current']}",
-                    delta=f"{data['change_pct']:+.2f}%",
-                )
+# if analyze_button and selected_asset:
+#     st.subheader(f"Analysis: {selected_asset}")
 
-    # --- Price Chart ---
-    df = price_data.get("dataframe", pd.DataFrame())
-    if not df.empty:
-        fig = create_price_chart(df, f"{selected_asset} - Price Chart (3 Months)")
-        st.plotly_chart(fig, use_container_width=True)
+#     # --- Price Data ---
+#     with st.spinner("Fetching market data..."):
+#         price_data = cached_price_summary(selected_ticker, is_commodity=is_commodity)
 
-        vol_fig = create_volume_chart(df, f"{selected_asset} - Volume")
-        st.plotly_chart(vol_fig, use_container_width=True)
+#     if "error" in price_data:
+#         st.error(f"Could not fetch data for {selected_asset}. Please try again.")
+#         st.stop()
 
-    st.divider()
+#     # --- Display Price Metrics ---
+#     st.markdown("### 📈 Price Overview")
+#     price_changes = price_data.get("price_changes", {})
+#     info = price_data.get("info", {})
 
-    # --- News Fetching ---
-    with st.spinner("Fetching news articles..."):
-        all_articles = cached_news(selected_asset)
+#     if info:
+#         col1, col2, col3, col4 = st.columns(4)
+#         with col1:
+#             st.metric("Current Price", f"₹{info.get('current_price', 'N/A')}")
+#         with col2:
+#             st.metric("Sector", info.get("sector", "N/A"))
+#         with col3:
+#             st.metric("Market Cap", format_market_cap(info.get("market_cap", 0)))
+#         with col4:
+#             st.metric("P/E Ratio", f"{info.get('pe_ratio', 'N/A')}")
 
-    st.markdown(f"*Found {len(all_articles)} news articles*")
+#     if price_changes:
+#         cols = st.columns(4)
+#         for i, (period, data) in enumerate(price_changes.items()):
+#             with cols[i]:
+#                 st.metric(
+#                     f"{period} Change",
+#                     f"₹{data['current']}",
+#                     delta=f"{data['change_pct']:+.2f}%",
+#                 )
 
-    # --- Sentiment Report ---
-    st.markdown("### 🧠 Sentiment Report")
-    st.caption("What the market is thinking about this asset")
+#     # --- Price Chart ---
+#     df = price_data.get("dataframe", pd.DataFrame())
+#     if not df.empty:
+#         fig = create_price_chart(df, f"{selected_asset} - Price Chart (3 Months)")
+#         st.plotly_chart(fig, use_container_width=True)
 
-    period_sentiments = {}
-    progress_bar = st.progress(0)
+#         vol_fig = create_volume_chart(df, f"{selected_asset} - Volume")
+#         st.plotly_chart(vol_fig, use_container_width=True)
 
-    for i, (period_label, days) in enumerate(SENTIMENT_PERIODS.items()):
-        with st.spinner(f"Analyzing sentiment for {period_label}..."):
-            period_articles = filter_news_by_period(all_articles, days)
-            sentiment = analyze_sentiment_for_period(
-                selected_asset, period_articles, period_label
-            )
-            period_sentiments[period_label] = sentiment
-        progress_bar.progress((i + 1) / len(SENTIMENT_PERIODS))
+#     st.divider()
 
-    progress_bar.empty()
+#     # --- News Fetching ---
+#     with st.spinner("Fetching news articles..."):
+#         all_articles = cached_news(selected_asset)
 
-    for period, sentiment in period_sentiments.items():
-        with st.expander(f"📅 {period}", expanded=(period == "5 Days")):
-            st.write(sentiment)
+#     st.markdown(f"*Found {len(all_articles)} news articles*")
 
-    st.divider()
+#     # --- Sentiment Report ---
+#     st.markdown("### 🧠 Sentiment Report")
+#     st.caption("What the market is thinking about this asset")
 
-    # --- Long Term Report ---
-    st.markdown("### 📋 Long-Term Analysis Report")
-    st.caption("Price changes, trends, and probable reasons")
+#     period_sentiments = {}
+#     progress_bar = st.progress(0)
 
-    with st.spinner("Generating long-term analysis..."):
-        long_term_report = generate_long_term_report(
-            asset_name=selected_asset,
-            price_changes=price_changes,
-            articles=all_articles,
-            stock_info=info,
-        )
+#     for i, (period_label, days) in enumerate(SENTIMENT_PERIODS.items()):
+#         with st.spinner(f"Analyzing sentiment for {period_label}..."):
+#             period_articles = filter_news_by_period(all_articles, days)
+#             sentiment = analyze_sentiment_for_period(
+#                 selected_asset, period_articles, period_label
+#             )
+#             period_sentiments[period_label] = sentiment
+#         progress_bar.progress((i + 1) / len(SENTIMENT_PERIODS))
 
-    st.write(long_term_report)
+#     progress_bar.empty()
 
-    st.divider()
+#     for period, sentiment in period_sentiments.items():
+#         with st.expander(f"📅 {period}", expanded=(period == "5 Days")):
+#             st.write(sentiment)
 
-    # --- Upcoming Factors ---
-    st.markdown("### 🔮 Upcoming Factors")
-    st.caption("Events and catalysts that could affect the price")
+#     st.divider()
 
-    with st.spinner("Identifying upcoming factors..."):
-        upcoming_report = generate_upcoming_factors_report(
-            asset_name=selected_asset,
-            articles=all_articles,
-            stock_info=info,
-        )
+#     # --- Long Term Report ---
+#     st.markdown("### 📋 Long-Term Analysis Report")
+#     st.caption("Price changes, trends, and probable reasons")
 
-    st.write(upcoming_report)
+#     with st.spinner("Generating long-term analysis..."):
+#         long_term_report = generate_long_term_report(
+#             asset_name=selected_asset,
+#             price_changes=price_changes,
+#             articles=all_articles,
+#             stock_info=info,
+#         )
 
-    st.divider()
+#     st.write(long_term_report)
 
-    # --- Recent News ---
-    st.markdown("### 📰 Recent News Headlines")
-    for article in all_articles[:10]:
-        st.markdown(
-            f"- **{article['title']}** — *{article.get('source', '')}* ({article.get('published_at', '')[:10]})"
-        )
+#     st.divider()
 
-elif not analyze_button:
-    st.info("👈 Select an asset from the sidebar and click **Generate Analysis** to start.")
+#     # --- Upcoming Factors ---
+#     st.markdown("### 🔮 Upcoming Factors")
+#     st.caption("Events and catalysts that could affect the price")
 
-    st.markdown("### What this tool provides:")
-    st.markdown("""
-    1. **Sentiment Report** — What traders/investors are thinking (5D, 15D, 30D, 3M)
-    2. **Long-Term Analysis** — Price changes, trends, and probable reasons
-    3. **Upcoming Factors** — Events and catalysts that could affect prices
+#     with st.spinner("Identifying upcoming factors..."):
+#         upcoming_report = generate_upcoming_factors_report(
+#             asset_name=selected_asset,
+#             articles=all_articles,
+#             stock_info=info,
+#         )
 
-    ---
-    **Coverage:**
-    - 📊 Nifty 250 Stocks (NSE)
-    - 🏗️ Major MCX Commodities (Gold, Silver, Crude Oil, Natural Gas, Copper, Zinc, Aluminium, Nickel, Cotton, Mentha Oil)
-    """)
+#     st.write(upcoming_report)
+
+#     st.divider()
+
+#     # --- Recent News ---
+#     st.markdown("### 📰 Recent News Headlines")
+#     for article in all_articles[:10]:
+#         st.markdown(
+#             f"- **{article['title']}** — *{article.get('source', '')}* ({article.get('published_at', '')[:10]})"
+#         )
+
+# elif not analyze_button:
+#     st.info("👈 Select an asset from the sidebar and click **Generate Analysis** to start.")
+
+#     st.markdown("### What this tool provides:")
+#     st.markdown("""
+#     1. **Sentiment Report** — What traders/investors are thinking (5D, 15D, 30D, 3M)
+#     2. **Long-Term Analysis** — Price changes, trends, and probable reasons
+#     3. **Upcoming Factors** — Events and catalysts that could affect prices
+
+#     ---
+#     **Coverage:**
+#     - 📊 Nifty 250 Stocks (NSE)
+#     - 🏗️ Major MCX Commodities (Gold, Silver, Crude Oil, Natural Gas, Copper, Zinc, Aluminium, Nickel, Cotton, Mentha Oil)
+#     """)
