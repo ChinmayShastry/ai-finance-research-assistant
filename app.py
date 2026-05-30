@@ -97,7 +97,7 @@ with st.sidebar:
     st.markdown(f"NewsAPI: {news_status}")
 
     st.divider()
-    st.header("🔍 Select Asset")")
+    st.header("🔍 Select Asset"))
 
     asset_type = st.radio("Asset Type", ["Stocks", "Commodities"])
 
