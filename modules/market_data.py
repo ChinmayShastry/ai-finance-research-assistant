@@ -29,8 +29,8 @@ def get_stock_data(ticker: str, period_days: int = 90):
         if "Date" in df.columns:
             df["Date"] = pd.to_datetime(df["Date"]).dt.date
 
-        print(f"\nTicker: {ticker}")
-        print(df[["Date", "Close"]].tail())
+        print(f"Yahoo Rate Limited: {ticker}")
+        print(f"Yahoo Error ({ticker}): {e}")
         return df
 
     except YFRateLimitError:
@@ -100,7 +100,6 @@ def get_stock_info(ticker: str) -> dict:
 
             "currency":
                 info.get("currency")
-                or fast.get("currency")
                 or "INR",
         }
 
@@ -184,7 +183,7 @@ def calculate_price_changes(df: pd.DataFrame) -> dict:
     for label, days in periods.items():
 
         if len(df) >= days:
-            past_price = float(df["Close"].iloc[-days])
+            past_price = float(df["Close"].iloc[max(0, len(df) - days)])
         else:
             past_price = float(df["Close"].iloc[0])
 
@@ -199,7 +198,7 @@ def calculate_price_changes(df: pd.DataFrame) -> dict:
     return changes
 
 
-def get_price_summary(ticker: str, is_commodity: bool = False) -> dict:
+def get_price_summary(ticker: str, is_commodity: bool = False):
 
     df = get_stock_data(ticker, period_days=100)
 
@@ -208,47 +207,13 @@ def get_price_summary(ticker: str, is_commodity: bool = False) -> dict:
 
     info = get_stock_info(ticker)
 
-    usd_inr = None
-
-    # Commodity USD -> INR Conversion
-    if is_commodity:
-    
-        usd_inr = get_usd_inr_rate()
-    
-        try:
-    
-            for col in ["Open", "High", "Low", "Close"]:
-    
-                if col in df.columns:
-                    df[col] = df[col] * usd_inr
-    
-            # Convert 52W High & Low to INR
-            for key in ["52w_high", "52w_low"]:
-    
-                value = info.get(key)
-    
-                if isinstance(value, (int, float)):
-                    info[key] = round(value * usd_inr, 2)
-    
-            # Force current price from converted dataframe
-            if not df.empty:
-    
-                info["current_price"] = round(
-                    float(df["Close"].dropna().iloc[-1]),
-                    2
-                )
-    
-        except Exception as e:
-    
-            print(f"Commodity Conversion Error: {e}")
-
     price_changes = calculate_price_changes(df)
 
-    # Stock fallback current price
+    # Fallback current price from dataframe
     try:
 
         if (
-            info.get("current_price") in [None, "N/A"]
+            info.get("current_price") in [None, "", "N/A"]
             and not df.empty
         ):
 
@@ -264,5 +229,5 @@ def get_price_summary(ticker: str, is_commodity: bool = False) -> dict:
         "info": info,
         "price_changes": price_changes,
         "dataframe": df,
-        "usd_inr_rate": usd_inr,
+        "usd_inr_rate": None,
     }
