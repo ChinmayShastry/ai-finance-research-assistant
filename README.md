@@ -217,25 +217,43 @@ Research Dashboard
 
 ### Dashboard Overview
 
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](screenshots/UI.png)
+
+---
+
+### Stock Price Overview  
+
+![Stock Price Overview](screenshots/Stock_Price_Overview.png)
+
+---
+
+### Price and Volume Chart
+
+![Price and Volume Chart](screenshots/Price_and_Volume_Chart.png)
 
 ---
 
 ### AI Sentiment Analysis
 
-![Sentiment Analysis](screenshots/sentiment_analysis.png)
+![AI Sentiment Analysis](screenshots/Sentiment_Report.png)
 
 ---
 
 ### Long-Term Research Report
 
-![Long Term Report](screenshots/long_term_report.png)
+![Long Term Analysis Report](screenshots/Long_Term_Analysis_Report.png)
 
 ---
 
 ### Upcoming Factors & Risk Analysis
 
-![Upcoming Factors](screenshots/upcoming_factors.png)
+![Upcoming Factors](screenshots/Upcoming_Factors.png)
+
+---
+
+### Recent News Headlines
+
+![Recent News Headlines](screenshots/Recent_News_Headlines.png)
 
 ---
 
