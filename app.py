@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import streamlit as st
 import pandas as pd
 
-from config import OPENAI_API_KEY, NEWS_API_KEY, SENTIMENT_PERIODS
+from config import SENTIMENT_PERIODS
 from data.nifty250 import NIFTY_250_STOCKS, STOCK_SECTORS
 from data.commodities import COMMODITIES
 from modules.market_data import get_price_summary, get_usd_inr_rate
@@ -14,6 +14,15 @@ from modules.news_fetcher import get_news_for_asset, filter_news_by_period
 from modules.sentiment_analyzer import analyze_sentiment_for_period, generate_sentiment_report
 from modules.report_generator import generate_long_term_report, generate_upcoming_factors_report
 from modules.utils import format_market_cap, create_price_chart, create_volume_chart, color_change
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+NEWS_API_KEY = os.getenv("NEWS_API_KEY")
+
+if "openai_key" not in st.session_state:
+    st.session_state.openai_key = OPENAI_API_KEY
+
+if "news_key" not in st.session_state:
+    st.session_state.news_key = NEWS_API_KEY
 
 @st.cache_data(ttl=900)
 def cached_price_summary(ticker, is_commodity):
@@ -37,15 +46,58 @@ st.divider()
 
 # --- Sidebar ---
 with st.sidebar:
+
     st.header("⚙️ Configuration")
 
-    api_status = "✅" if OPENAI_API_KEY else "❌"
-    news_status = "✅" if NEWS_API_KEY else "⚠️ (Google News RSS only)"
+    with st.expander("🔐 API Keys", expanded=True):
+
+        st.caption(
+            "Your API keys are stored only for the current session and are never saved."
+        )
+
+        # OpenAI Key
+
+        if not st.session_state.openai_key:
+
+            user_openai_key = st.text_input(
+                "OpenAI API Key",
+                type="password",
+                help="Enter your OpenAI API Key"
+            )
+
+            if user_openai_key:
+                st.session_state.openai_key = user_openai_key
+
+        # NewsAPI Key
+
+        if not st.session_state.news_key:
+
+            user_news_key = st.text_input(
+                "NewsAPI Key (Optional)",
+                type="password",
+                help="Enter your NewsAPI Key"
+            )
+
+            if user_news_key:
+                st.session_state.news_key = user_news_key
+
+    api_status = (
+        "✅ Available"
+        if st.session_state.openai_key
+        else "❌ Required"
+    )
+
+    news_status = (
+        "✅ Available"
+        if st.session_state.news_key
+        else "⚠️ Optional (Google RSS Only)"
+    )
+
     st.markdown(f"OpenAI API: {api_status}")
     st.markdown(f"NewsAPI: {news_status}")
 
     st.divider()
-    st.header("🔍 Select Asset")
+    st.header("🔍 Select Asset")")
 
     asset_type = st.radio("Asset Type", ["Stocks", "Commodities"])
 
@@ -79,9 +131,12 @@ with st.sidebar:
     analyze_button = st.button("🚀 Generate Analysis", type="primary", use_container_width=True)
 
 # --- Main Content ---
-if not OPENAI_API_KEY:
-    st.error("⚠️ OpenAI API key not found. Please add it to your .env file.")
-    st.code("OPENAI_API_KEY=your_key_here", language="bash")
+if not st.session_state.openai_key:
+
+    st.warning(
+        "Please enter an OpenAI API Key in the sidebar to generate AI-powered reports."
+    )
+
     st.stop()
 
 if analyze_button and selected_asset:
@@ -249,6 +304,11 @@ if analyze_button and selected_asset:
             articles=all_articles,
             stock_info=info,
         )
+    with st.expander("🔐 API Keys"):
+
+    st.caption(
+        "Your API keys are stored only for the current session and are never saved."
+    )
 
     st.write(upcoming_report)
 
