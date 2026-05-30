@@ -19,10 +19,10 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 NEWS_API_KEY = os.getenv("NEWS_API_KEY")
 
 if "openai_key" not in st.session_state:
-    st.session_state.openai_key = OPENAI_API_KEY
+    st.session_state.openai_key = OPENAI_API_KEY or ""
 
 if "news_key" not in st.session_state:
-    st.session_state.news_key = NEWS_API_KEY
+    st.session_state.news_key = NEWS_API_KEY or ""
 
 @st.cache_data(ttl=900)
 def cached_price_summary(ticker, is_commodity):
@@ -304,12 +304,7 @@ if analyze_button and selected_asset:
             articles=all_articles,
             stock_info=info,
         )
-    with st.expander("🔐 API Keys"):
-
-    st.caption(
-        "Your API keys are stored only for the current session and are never saved."
-    )
-
+        
     st.write(upcoming_report)
 
     st.divider()
