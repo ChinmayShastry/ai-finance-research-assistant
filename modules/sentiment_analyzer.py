@@ -2,7 +2,7 @@ from openai import OpenAI
 from config import OPENAI_API_KEY, OPENAI_MODEL
 
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+# client = OpenAI(api_key=OPENAI_API_KEY)
 
 
 def analyze_sentiment_for_period(asset_name: str, articles: list[dict], period_label: str) -> str:
@@ -56,6 +56,10 @@ def _format_articles_for_prompt(articles: list[dict]) -> str:
 def _call_openai(prompt: str) -> str:
     """Make a call to OpenAI API."""
     try:
+        client = OpenAI(
+            api_key=st.session_state.openai_key
+        )
+
         response = client.chat.completions.create(
             model=OPENAI_MODEL,
             messages=[
