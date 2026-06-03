@@ -3,14 +3,12 @@ import pandas as pd
 from datetime import datetime, timedelta
 from yfinance.exceptions import YFRateLimitError
 
-
 def get_stock_data(ticker: str, period_days: int = 90):
 
     end_date = datetime.now()
     start_date = end_date - timedelta(days=period_days)
 
     try:
-
         stock = yf.Ticker(ticker)
 
         df = stock.history(
@@ -23,23 +21,18 @@ def get_stock_data(ticker: str, period_days: int = 90):
             return pd.DataFrame()
 
         df = df.reset_index()
-
         df = df.dropna(subset=["Close"])
 
         if "Date" in df.columns:
             df["Date"] = pd.to_datetime(df["Date"]).dt.date
 
-        print(f"Yahoo Rate Limited: {ticker}")
-        print(f"Yahoo Error ({ticker}): {e}")
-        return df
+        return df   # ← clean return, no stray prints
 
     except YFRateLimitError:
-
         print(f"Yahoo Rate Limited: {ticker}")
         return pd.DataFrame()
 
     except Exception as e:
-
         print(f"Yahoo Error ({ticker}): {e}")
         return pd.DataFrame()
 
