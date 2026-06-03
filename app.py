@@ -165,7 +165,7 @@ if analyze_button and selected_asset:
             with col1:
                 st.metric(
                     "Current Price",
-                    f"₹{info.get('current_price', 'N/A')}"
+                    f"${info.get('current_price', 'N/A')}"
                 )
     
             with col2:
@@ -179,13 +179,13 @@ if analyze_button and selected_asset:
             with col3:
                 st.metric(
                     "52W High",
-                    f"₹{info.get('52w_high', 'N/A')}"
+                    f"${info.get('52w_high', 'N/A')}"
                 )
     
             with col4:
                 st.metric(
                     "52W Low",
-                    f"₹{info.get('52w_low', 'N/A')}"
+                    f"${info.get('52w_low', 'N/A')}"
                 )
     
             st.caption(
@@ -229,13 +229,24 @@ if analyze_button and selected_asset:
 
     if price_changes:
         cols = st.columns(4)
+
+        currency_symbol = "$" if is_commodity else "₹"
+
         for i, (period, data) in enumerate(price_changes.items()):
             with cols[i]:
                 st.metric(
                     f"{period} Change",
-                    f"₹{data['current']}",
+                    f"{currency_symbol}{data['current']}",
                     delta=f"{data['change_pct']:+.2f}%",
                 )
+        
+        # for i, (period, data) in enumerate(price_changes.items()):
+        #     with cols[i]:
+        #         st.metric(
+        #             f"{period} Change",
+        #             f"₹{data['current']}",
+        #             delta=f"{data['change_pct']:+.2f}%",
+        #         )
 
     # --- Price Chart ---
     df = price_data.get("dataframe", pd.DataFrame())
